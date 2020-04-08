@@ -6,11 +6,13 @@ import os
 import namegenerator
 from firebase_admin import firestore, credentials, initialize_app
 from flask import Flask, jsonify, request, Response
+from flask_cors import CORS
 from random import randint, shuffle
 
 # SETUP ---
 
 app = Flask(__name__)
+CORS(app)
 
 # initialize firebase ap
 cred = credentials.ApplicationDefault()
@@ -53,7 +55,7 @@ def devices(identifier = None):
 @app.route('/api/games/<identifier>', methods = ['GET', 'PUT'])
 @app.route('/api/games', methods = ['POST'])
 def games(identifier = None):
-    if request.method == 'GET' or request.method == 'PUT':
+    if request.method == 'GET':
         # query db
         doc = db.collection('games').document(identifier)
 
@@ -63,30 +65,27 @@ def games(identifier = None):
         if game is None:
             return Response(status=404)
 
-        # short circuit for GET
-        if request.method == 'GET':
-           return jsonify(game)
+        # get player names
+        players = {}
+        for device_id in game['sequence']:
+            device = db.collection('devices').document(device_id)
+            device = device.get().to_dict()
 
-        # short circuit for already started game
-        if game['status'] != 'not started':
-            return jsonify({'message': 'Game is not accepting new players :('}), 403
+            players[device_id] = device['name']
 
-        # get device uuid
-        device_uuid = request.args.get('device')
-        if device_uuid is None:
-            return Response(status=400)
-
-        # only add if device isn't in game
-        if device_uuid not in game['devices']:
-            doc.update({
-                'devices': firestore.ArrayUnion([device_uuid])
-            })
-
-        return Response(status=200)
+        return jsonify({
+            'owner': game['owner'],
+            'pin': game['pin'],
+            'players': players,
+            'progress': '{}/{}'.format(game['position'], len(game['deck'])),
+            'turn': game['turn'],
+            'sequence': game['sequence'],
+            'status': game['status']
+        })
 
     elif request.method == 'POST':
         # get current device uuid
-        device_uuid = request.args.get('device')
+        device_uuid = request.headers.get('device')
         if device_uuid is None:
             return Response(status=400)
 
@@ -95,10 +94,16 @@ def games(identifier = None):
         deck = list(range(1, deck_info['size']))
         shuffle(deck)
 
+        pin = randint(100000, 999999)
+        while next(
+                db.collection('games').where('pin', '==', pin).stream(), 
+                None) is not None:
+            pin = randint(100000, 999999)
+
         # create new game
         game = {
             'owner': device_uuid,
-            'pin': randint(100000, 999999),
+            'pin': pin,
             'devices': [device_uuid],
             'sequence': [],
             'deck': deck,
@@ -110,7 +115,35 @@ def games(identifier = None):
         # add game to games collection
         (_, doc) = db.collection('games').add(game)
 
-        return jsonify({'uuid': doc.id, 'pin': game['pin']})
+        return jsonify({'id': doc.id, 'pin': game['pin']})
+
+@app.route('/api/games/<pin>/join', methods = ['GET'])
+def join(pin):
+    # make query
+    games_ref = db.collection('games').where('pin', '==', int(pin))
+    
+    # get game
+    game_doc = next(games_ref.stream())
+    game = game_doc.to_dict()
+
+    # short circuit for already started game
+    if game['status'] != 'not started':
+        return (
+            jsonify({'message': 'Game is not accepting new players :('}), 
+            403)
+
+    # get device uuid
+    device_uuid = request.headers.get('device')
+    if device_uuid is None:
+        return Response(status=400)
+
+    # only add if device isn't in game
+    if device_uuid not in game['devices']:
+        game_doc.reference.update({
+            'devices': firestore.ArrayUnion([device_uuid])
+        })
+
+    return jsonify({'id': game_doc.reference.id})
 
 @app.route('/api/games/<identifier>/start', methods = ['GET'])
 def start(identifier):
@@ -121,7 +154,7 @@ def start(identifier):
     game = game_doc.get().to_dict()
 
     # make sure owner is requesting, otherwise deny
-    device_uuid = request.args.get('device')
+    device_uuid = request.headers.get('device')
     if device_uuid != game['owner']:
         return jsonify({'message': 'Only the owner can start the game!'}), 403
 
@@ -153,7 +186,7 @@ def draw(identifier):
         return({'message': 'This game is not in progress!'}), 403
 
     # check for correct turn
-    device_uuid = request.args.get('device', 'unknown')
+    device_uuid = request.headers.get('device', 'unknown')
     if game['sequence'][game['turn']] != device_uuid:
         return jsonify({'message': 'It is not your turn!'}), 403
 
