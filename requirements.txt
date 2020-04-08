@@ -2,3 +2,4 @@ Flask==1.1.1
 google-cloud-storage==1.17.0
 google-cloud-firestore==1.4.0
 firebase-admin==2.17.0
+namegenerator==1.0.6
