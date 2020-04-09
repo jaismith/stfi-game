@@ -116,7 +116,7 @@ class Game extends React.Component {
                                 variant="primary" 
                                 type="button"
                                 onClick={() => this.draw()}
-                                disabled={!this.state.game.sequence[this.state.game.turn] === localStorage.getItem('uuid')}>
+                                disabled={this.state.game.sequence[this.state.game.turn] !== localStorage.getItem('uuid')}>
                                 Draw
                                 {this.state.drawing ? 
                                     <Spinner

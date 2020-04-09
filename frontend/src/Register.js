@@ -44,23 +44,23 @@ class Register extends React.Component {
         return(
             <div className="Page">
                 <h2>Create Player</h2>
-                <Form>
-                <Form.Group controlId="registerName">
-                    <Form.Label>Name</Form.Label>
-                    <Form.Control 
-                        type="text" 
-                        placeholder="name"
-                        ref={ref => this.nameField = ref}/>
-                    <Form.Text className="text-muted">
-                    A random name will be generated if none is provided.
-                    </Form.Text>
-                </Form.Group>
-                <Button
-                    variant="primary"
-                    type="button"
-                    onClick={() => this.register()}>
-                    Register
-                </Button>
+                <Form onSubmit={(e) => { e.preventDefault(); this.register() }}>
+                    <Form.Group controlId="registerName">
+                        <Form.Label>Name</Form.Label>
+                        <Form.Control 
+                            type="text" 
+                            placeholder="name"
+                            ref={ref => this.nameField = ref}/>
+                        <Form.Text className="text-muted">
+                        A random name will be generated if none is provided.
+                        </Form.Text>
+                    </Form.Group>
+                    <Button
+                        variant="primary"
+                        type="button"
+                        onClick={() => this.register()}>
+                        Register
+                    </Button>
                 </Form>
             </div>
         )

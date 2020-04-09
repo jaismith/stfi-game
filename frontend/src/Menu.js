@@ -51,7 +51,7 @@ class Menu extends React.Component {
                 <h2 className="Title">
                     Join Existing Game
                 </h2>
-                <Form>
+                <Form onSubmit={(e) => { e.preventDefault(); this.join() }}>
                     <Form.Group controlId="joinMenu">
                         <Form.Label>Game PIN</Form.Label>
                         <Form.Control 
