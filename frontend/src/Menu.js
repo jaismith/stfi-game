@@ -6,13 +6,9 @@ import axios from 'axios';
 import { withRouter } from "react-router-dom";
 
 class Menu extends React.Component {
-    constructor(props) {
-        super(props)
-    }
-
     join() {
         let pin = this.joinField.value
-        if(pin.length != 6) {
+        if(pin.length !== 6) {
             console.log("Invalid PIN: " + pin)
             return
         }
@@ -51,7 +47,7 @@ class Menu extends React.Component {
 
     render() {
         return(
-            <div className="Menu">
+            <div className="Page">
                 <h2 className="Title">
                     Join Existing Game
                 </h2>

@@ -5,13 +5,14 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Redirect
+  Link
 } from "react-router-dom";
 import axios from "axios";
 
 import Register from "./Register";
 import Menu from "./Menu";
 import Lobby from "./Lobby";
+import Game from "./Game";
 
 export default class App extends React.Component {
   constructor(props) {
@@ -27,10 +28,16 @@ export default class App extends React.Component {
     }
   }
 
+  componentDidMount() {
+    if(!this.state.registered) {
+      this.router.history.push("/register")
+    }
+  }
+
   render() {
     return (
       <div className="App">
-        <Router>
+        <Router ref={ref => this.router = ref}>
           <Switch>
             <Route path="/register">
               <Register />
@@ -38,12 +45,20 @@ export default class App extends React.Component {
             <Route path="/:gameID/lobby">
               <Lobby />
             </Route>
-            <Route path="/">
-              <Redirect to={this.state.registered ? "/" : "/register"} /> 
+            <Route path="/:gameID">
+              <Game />
+            </Route>
+            <Route path="/"> 
               <Menu />
             </Route>
           </Switch>
+          <div className="Menu">
+            <Link to="/">Return to Menu</Link>
+          </div>
         </Router>
+        <div className="Github">
+          <a href="https://github.com/jaismith/stfi-game">Source Code</a>
+        </div>
       </div>
     )
   }

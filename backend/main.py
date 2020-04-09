@@ -41,10 +41,16 @@ def devices(identifier = None):
             return jsonify(device)
 
     elif request.method == 'POST':
+        data = request.get_json()
+        if data is None:
+            data = {}
+        else:
+            data = data.get('params')
+
         # create new device
         device = {
             'agent': request.headers.get('User-Agent', 'unknown'),
-            'name': request.args.get('name', namegenerator.gen())
+            'name': data.get('name', namegenerator.gen())
         }
 
         # add device to db collection
@@ -66,18 +72,18 @@ def games(identifier = None):
             return Response(status=404)
 
         # get player names
-        players = {}
-        for device_id in game['sequence']:
+        players = []
+        for device_id in game['devices']:
             device = db.collection('devices').document(device_id)
             device = device.get().to_dict()
 
-            players[device_id] = device['name']
+            players.append({'id': device_id, 'name': device['name']})
 
         return jsonify({
             'owner': game['owner'],
             'pin': game['pin'],
             'players': players,
-            'progress': '{}/{}'.format(game['position'], len(game['deck'])),
+            'card': game['deck'][game['position']],
             'turn': game['turn'],
             'sequence': game['sequence'],
             'status': game['status']
@@ -91,7 +97,7 @@ def games(identifier = None):
 
         # load stfi deck info
         deck_info = db.collection('decks').document('stfi').get().to_dict()
-        deck = list(range(1, deck_info['size']))
+        deck = list(range(0, deck_info['size'] - 1))
         shuffle(deck)
 
         pin = randint(100000, 999999)

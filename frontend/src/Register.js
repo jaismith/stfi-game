@@ -17,13 +17,11 @@ class Register extends React.Component {
         }
     }
 
-    register(e) {
-        e.preventDefault()
-
+    register() {
         console.log("Registering user with API")
 
         axios.post('https://stfi-game.uk.r.appspot.com/api/devices', { params: {
-            name: e.target.value
+            name: this.nameField.value
         }}).then(res => {
             if(res.status !== 200) {
                 this.setState({failed: true})
@@ -44,19 +42,23 @@ class Register extends React.Component {
 
     render() {
         return(
-            <div className="Register">
+            <div className="Page">
+                <h2>Create Player</h2>
                 <Form>
                 <Form.Group controlId="registerName">
                     <Form.Label>Name</Form.Label>
-                    <Form.Control type="text" placeholder="name"/>
+                    <Form.Control 
+                        type="text" 
+                        placeholder="name"
+                        ref={ref => this.nameField = ref}/>
                     <Form.Text className="text-muted">
                     A random name will be generated if none is provided.
                     </Form.Text>
                 </Form.Group>
                 <Button
                     variant="primary"
-                    type="submit"
-                    onClick={(e) => this.register(e)}>
+                    type="button"
+                    onClick={() => this.register()}>
                     Register
                 </Button>
                 </Form>

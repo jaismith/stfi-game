@@ -1,0 +1,6 @@
+.Card {
+  border-radius: 20px;
+  box-shadow: 5px 5px 8px lightgrey;
+  height: 75vh;
+  overflow: hidden;
+}
